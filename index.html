@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>환자 안전 사고 맞추기 게임</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 500px;
+        }
+        h1 { color: #0056b3; font-size: 1.5rem; margin-bottom: 20px; }
+        .question-box {
+            font-size: 1.3rem;
+            font-weight: bold;
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            word-break: keep-all;
+        }
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        button {
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.95); }
+        
+        .btn-fall { background-color: #ff6b6b; } /* 낙상 - 빨강 */
+        .btn-med { background-color: #4dabf7; } /* 투약 - 파랑 */
+        .btn-id { background-color: #51cf66; } /* 환자확인 - 초록 */
+        .btn-near { background-color: #fcc419; color: black; } /* 근접오류 - 노랑 */
+        
+        #result-area { display: none; margin-top: 20px; }
+        #result-msg { font-size: 1.4rem; font-weight: bold; display: block; margin-bottom: 10px;}
+        #next-btn { 
+            background-color: #343a40; 
+            width: 100%; 
+            margin-top: 10px;
+        }
+
+        /* 시작 화면 */
+        #start-screen { display: block; }
+        #game-screen { display: none; }
+        #end-screen { display: none; }
+        .start-btn { background-color: #0056b3; width: 100%; font-size: 1.5rem; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="start-screen">
+            <h1>🏥 환자 안전 퀴즈 🏥</h1>
+            <p style="font-size: 1.2rem; margin-bottom: 30px;">
+                환자에게 일어난 상황을 보고<br>
+                어떤 사고인지 맞춰보세요!
+            </p>
+            <button class="start-btn" onclick="startGame()">게임 시작하기</button>
+        </div>
+
+        <div id="game-screen">
+            <div id="progress" style="margin-bottom:10px; color:#666;">문제 1 / 4</div>
+            <div class="question-box" id="question-text">
+                문제가 여기에 나옵니다.
+            </div>
+
+            <div class="btn-grid" id="answer-buttons">
+                <button class="btn-fall" onclick="checkAnswer('낙상')">🚨 낙상</button>
+                <button class="btn-med" onclick="checkAnswer('투약오류')">💊 투약오류</button>
+                <button class="btn-id" onclick="checkAnswer('환자확인')">🆔 환자확인</button>
+                <button class="btn-near" onclick="checkAnswer('근접오류')">😅 근접오류</button>
+            </div>
+
+            <div id="result-area">
+                <span id="result-msg">정답입니다!</span>
+                <div id="explanation" style="font-size:1rem; color:#555; margin-bottom:15px;">설명</div>
+                <button id="next-btn" onclick="nextQuestion()">다음 문제 ➡</button>
+            </div>
+        </div>
+
+        <div id="end-screen">
+            <h1>수고하셨습니다!👏</h1>
+            <p id="final-score" style="font-size: 1.5rem; font-weight:bold;">결과</p>
+            <p>환자 안전, 우리 모두 함께 지켜요!</p>
+            <button class="start-btn" onclick="location.reload()">다시 하기</button>
+        </div>
+    </div>
+
+    <script>
+        // 퀴즈 데이터 (문제 수정은 여기서 하세요)
+        const quizData = [
+            {
+                text: "환자가 화장실을 가려고 침대에서 내려오다가, 바닥에 떨어진 물기에 미끄러져 엉덩방아를 찧었습니다.",
+                answer: "낙상",
+                explain: "💡 바닥의 물기를 즉시 제거하고, 미끄럼 방지 신발을 신어야 합니다."
+            },
+            {
+                text: "간호사가 '김감자' 님에게 줄 약을 들고 갔는데, 확인을 안 하고 옆 침대의 '이고구마' 님에게 약을 주었습니다.",
+                answer: "환자확인",
+                explain: "💡 투약 전에는 반드시 개방형 질문으로 이름을 확인하고 팔찌를 대조해야 합니다."
+            },
+            {
+                text: "의사 처방은 '아침, 저녁' 복용인데, 실수로 '점심'에도 약을 주어 환자가 약을 한 번 더 먹게 되었습니다.",
+                answer: "투약오류",
+                explain: "💡 정확한 환자, 정확한 약물, 정확한 시간, 정확한 용량, 정확한 경로를 확인하는 '5 Right' 원칙이 중요합니다."
+            },
+            {
+                text: "환자에게 주사를 놓으려는 '직전'에, 환자 팔찌의 이름이 다른 것을 발견하고 주사를 놓지 않았습니다.",
+                answer: "근접오류",
+                explain: "💡 사고가 발생하기 전에 발견한 '아차사고'입니다. 이런 사례를 공유해야 큰 사고를 막을 수 있습니다."
+            }
+        ];
+
+        let currentQ = 0;
+        let score = 0;
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // 화면 초기화
+            document.getElementById('result-area').style.display = 'none';
+            document.getElementById('answer-buttons').style.display = 'grid'; // 버튼 다시 보이기
+            
+            // 문제 내용 로드
+            document.getElementById('progress').innerText = `문제 ${currentQ + 1} / ${quizData.length}`;
+            document.getElementById('question-text').innerText = quizData[currentQ].text;
+        }
+
+        function checkAnswer(userAnswer) {
+            const correctAnswer = quizData[currentQ].answer;
+            const explanation = quizData[currentQ].explain;
+            const resultMsg = document.getElementById('result-msg');
+            const explanationDiv = document.getElementById('explanation');
+
+            // 버튼 숨기기 (중복 클릭 방지 및 결과 집중)
+            document.getElementById('answer-buttons').style.display = 'none';
+            document.getElementById('result-area').style.display = 'block';
+
+            if (userAnswer === correctAnswer) {
+                resultMsg.innerText = "⭕ 정답입니다!";
+                resultMsg.style.color = "blue";
+                score++;
+            } else {
+                resultMsg.innerText = `❌ 땡! 정답은 '${correctAnswer}' 입니다.`;
+                resultMsg.style.color = "red";
+            }
+            explanationDiv.innerText = explanation;
+        }
+
+        function nextQuestion() {
+            currentQ++;
+            if (currentQ < quizData.length) {
+                loadQuestion();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        function showEndScreen() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+            document.getElementById('final-score').innerText = `${quizData.length}문제 중 ${score}개 맞춤!`;
+        }
+    </script>
+</body>
+</html>

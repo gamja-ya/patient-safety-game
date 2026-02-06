@@ -14,6 +14,7 @@
             min-height: 100vh;
             margin: 0;
             text-align: center;
+            overflow: hidden; /* 폭죽이 튀어나가지 않도록 */
         }
         .container {
             background-color: white;
@@ -22,6 +23,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             width: 90%;
             max-width: 500px;
+            position: relative; /* 폭죽 컨테이너 기준 */
         }
         h1 { color: #0056b3; font-size: 1.5rem; margin-bottom: 20px; }
         .question-box {
@@ -69,6 +71,18 @@
         #game-screen { display: none; }
         #end-screen { display: none; }
         .start-btn { background-color: #0056b3; width: 100%; font-size: 1.5rem; }
+
+        /* 폭죽 컨테이너 */
+        #confetti-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 클릭 방지 */
+            overflow: hidden; /* 컨테이너 밖으로 나가지 않게 */
+            z-index: 1000; /* 다른 요소 위로 */
+        }
     </style>
 </head>
 <body>
@@ -109,8 +123,11 @@
             <p>환자 안전, 우리 모두 함께 지켜요!</p>
             <button class="start-btn" onclick="location.reload()">다시 하기</button>
         </div>
+        
+        <div id="confetti-container"></div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.min.js"></script>
     <script>
         // 퀴즈 데이터 (문제 수정은 여기서 하세요)
         const quizData = [
@@ -138,6 +155,17 @@
 
         let currentQ = 0;
         let score = 0;
+
+        // 효과음 객체 생성
+        const soundCorrect = new Audio('https://freesound.org/data/previews/273/273200_4698547-lq.mp3'); // 딩동댕
+        const soundWrong = new Audio('https://freesound.org/data/previews/407/407153_6455208-lq.mp3'); // 뾱 (틀린 소리)
+        const soundFinish = new Audio('https://freesound.org/data/previews/200/200388_3641151-lq.mp3'); // 축하 박수
+        
+        // 폭죽 객체 생성
+        const jsConfetti = new JSConfetti({
+            confettiNumber: 200, // 폭죽 개수
+            confettiRadius: 6 // 폭죽 조각 크기
+        });
 
         function startGame() {
             document.getElementById('start-screen').style.display = 'none';
@@ -169,9 +197,12 @@
                 resultMsg.innerText = "⭕ 정답입니다!";
                 resultMsg.style.color = "blue";
                 score++;
+                soundCorrect.play(); // 정답 효과음 재생
+                jsConfetti.addConfetti(); // 폭죽 터뜨리기
             } else {
                 resultMsg.innerText = `❌ 땡! 정답은 '${correctAnswer}' 입니다.`;
                 resultMsg.style.color = "red";
+                soundWrong.play(); // 오답 효과음 재생
             }
             explanationDiv.innerText = explanation;
         }
@@ -189,6 +220,13 @@
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('end-screen').style.display = 'block';
             document.getElementById('final-score').innerText = `${quizData.length}문제 중 ${score}개 맞춤!`;
+            
+            soundFinish.play(); // 게임 종료 효과음 재생
+            jsConfetti.addConfetti({ // 종료 화면 폭죽은 좀 더 화려하게
+                confettiNumber: 300,
+                confettiRadius: 8,
+                confettiColors: ['#ff0a54', '#ff477e', '#ff7096', '#ff85a1', '#fbb1bd', '#f9bec7']
+            });
         }
     </script>
 </body>

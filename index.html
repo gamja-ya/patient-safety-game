@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>환자 안전 사고 맞추기 게임</title>
+    <script src="https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.min.js"></script>
     <style>
         body {
             font-family: 'Malgun Gothic', sans-serif;
@@ -14,7 +15,6 @@
             min-height: 100vh;
             margin: 0;
             text-align: center;
-            overflow: hidden; /* 폭죽이 튀어나가지 않도록 */
         }
         .container {
             background-color: white;
@@ -23,7 +23,6 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             width: 90%;
             max-width: 500px;
-            position: relative; /* 폭죽 컨테이너 기준 */
         }
         h1 { color: #0056b3; font-size: 1.5rem; margin-bottom: 20px; }
         .question-box {
@@ -52,85 +51,52 @@
             transition: transform 0.1s;
         }
         button:active { transform: scale(0.95); }
-        
-        .btn-fall { background-color: #ff6b6b; } /* 낙상 - 빨강 */
-        .btn-med { background-color: #4dabf7; } /* 투약 - 파랑 */
-        .btn-id { background-color: #51cf66; } /* 환자확인 - 초록 */
-        .btn-near { background-color: #fcc419; color: black; } /* 근접오류 - 노랑 */
-        
+        .btn-fall { background-color: #ff6b6b; }
+        .btn-med { background-color: #4dabf7; }
+        .btn-id { background-color: #51cf66; }
+        .btn-near { background-color: #fcc419; color: black; }
         #result-area { display: none; margin-top: 20px; }
         #result-msg { font-size: 1.4rem; font-weight: bold; display: block; margin-bottom: 10px;}
-        #next-btn { 
-            background-color: #343a40; 
-            width: 100%; 
-            margin-top: 10px;
-        }
-
-        /* 시작 화면 */
+        #next-btn { background-color: #343a40; width: 100%; margin-top: 10px; }
         #start-screen { display: block; }
         #game-screen { display: none; }
         #end-screen { display: none; }
         .start-btn { background-color: #0056b3; width: 100%; font-size: 1.5rem; }
-
-        /* 폭죽 컨테이너 */
-        #confetti-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* 클릭 방지 */
-            overflow: hidden; /* 컨테이너 밖으로 나가지 않게 */
-            z-index: 1000; /* 다른 요소 위로 */
-        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div id="start-screen">
-           <img src="gamja_nurse.png" alt="귀여운 간호사 캐릭터" style="width:120px; height:auto; margin-bottom:15px;">
+            <img src="gamja_nurse.png" alt="캐릭터" style="width:150px; height:auto; margin-bottom:15px;">
             <h1>🏥 환자 안전 퀴즈 🏥</h1>
-            <p style="font-size: 1.2rem; margin-bottom: 30px;">
-                환자에게 일어난 상황을 보고<br>
-                어떤 사고인지 맞춰보세요!
-            </p>
             <button class="start-btn" onclick="startGame()">게임 시작하기</button>
         </div>
 
         <div id="game-screen">
-            <div id="progress" style="margin-bottom:10px; color:#666;">문제 1 / 4</div>
-            <div class="question-box" id="question-text">
-                문제가 여기에 나옵니다.
-            </div>
-
+            <div id="progress" style="margin-bottom:10px; color:#666;"></div>
+            <div class="question-box" id="question-text"></div>
             <div class="btn-grid" id="answer-buttons">
                 <button class="btn-fall" onclick="checkAnswer('낙상')">🚨 낙상</button>
                 <button class="btn-med" onclick="checkAnswer('투약오류')">💊 투약오류</button>
                 <button class="btn-id" onclick="checkAnswer('환자확인')">🆔 환자확인</button>
                 <button class="btn-near" onclick="checkAnswer('근접오류')">😅 근접오류</button>
             </div>
-
             <div id="result-area">
-                <span id="result-msg">정답입니다!</span>
-                <div id="explanation" style="font-size:1rem; color:#555; margin-bottom:15px;">설명</div>
+                <span id="result-msg"></span>
+                <div id="explanation" style="font-size:1rem; color:#555; margin-bottom:15px;"></div>
                 <button id="next-btn" onclick="nextQuestion()">다음 문제 ➡</button>
             </div>
         </div>
 
         <div id="end-screen">
             <h1>수고하셨습니다!👏</h1>
-            <p id="final-score" style="font-size: 1.5rem; font-weight:bold;">결과</p>
-            <p>환자 안전, 우리 모두 함께 지켜요!</p>
+            <p id="final-score" style="font-size: 1.5rem; font-weight:bold;"></p>
             <button class="start-btn" onclick="location.reload()">다시 하기</button>
         </div>
-        
-        <div id="confetti-container"></div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.min.js"></script>
     <script>
-        // 퀴즈 데이터 (문제 수정은 여기서 하세요)
         const quizData = [
             {
                 text: "환자가 화장실을 가려고 침대에서 내려오다가, 바닥에 떨어진 물기에 미끄러져 엉덩방아를 찧었습니다.",
@@ -157,16 +123,8 @@
         let currentQ = 0;
         let score = 0;
 
-        // 효과음 객체 생성
-        const soundCorrect = new Audio('https://freesound.org/data/previews/273/273200_4698547-lq.mp3'); // 딩동댕
-        const soundWrong = new Audio('https://freesound.org/data/previews/407/407153_6455208-lq.mp3'); // 뾱 (틀린 소리)
-        const soundFinish = new Audio('https://freesound.org/data/previews/200/200388_3641151-lq.mp3'); // 축하 박수
-        
-        // 폭죽 객체 생성
-        const jsConfetti = new JSConfetti({
-            confettiNumber: 200, // 폭죽 개수
-            confettiRadius: 6 // 폭죽 조각 크기
-        });
+        // 폭죽 효과 초기화 (안전하게 함수 안에서 생성하도록 변경)
+        const jsConfetti = new JSConfetti();
 
         function startGame() {
             document.getElementById('start-screen').style.display = 'none';
@@ -175,58 +133,44 @@
         }
 
         function loadQuestion() {
-            // 화면 초기화
             document.getElementById('result-area').style.display = 'none';
-            document.getElementById('answer-buttons').style.display = 'grid'; // 버튼 다시 보이기
-            
-            // 문제 내용 로드
+            document.getElementById('answer-buttons').style.display = 'grid';
             document.getElementById('progress').innerText = `문제 ${currentQ + 1} / ${quizData.length}`;
             document.getElementById('question-text').innerText = quizData[currentQ].text;
         }
 
         function checkAnswer(userAnswer) {
             const correctAnswer = quizData[currentQ].answer;
-            const explanation = quizData[currentQ].explain;
-            const resultMsg = document.getElementById('result-msg');
-            const explanationDiv = document.getElementById('explanation');
-
-            // 버튼 숨기기 (중복 클릭 방지 및 결과 집중)
             document.getElementById('answer-buttons').style.display = 'none';
             document.getElementById('result-area').style.display = 'block';
 
             if (userAnswer === correctAnswer) {
-                resultMsg.innerText = "⭕ 정답입니다!";
-                resultMsg.style.color = "blue";
+                document.getElementById('result-msg').innerText = "⭕ 정답입니다!";
+                document.getElementById('result-msg').style.color = "blue";
                 score++;
-                soundCorrect.play(); // 정답 효과음 재생
-                jsConfetti.addConfetti(); // 폭죽 터뜨리기
+                // 폭죽 터뜨리기!
+                jsConfetti.addConfetti();
             } else {
-                resultMsg.innerText = `❌ 땡! 정답은 '${correctAnswer}' 입니다.`;
-                resultMsg.style.color = "red";
-                soundWrong.play(); // 오답 효과음 재생
+                document.getElementById('result-msg').innerText = `❌ 오답! 정답은 '${correctAnswer}'`;
+                document.getElementById('result-msg').style.color = "red";
             }
-            explanationDiv.innerText = explanation;
+            document.getElementById('explanation').innerText = quizData[currentQ].explain;
         }
 
         function nextQuestion() {
             currentQ++;
-            if (currentQ < quizData.length) {
-                loadQuestion();
-            } else {
-                showEndScreen();
-            }
+            if (currentQ < quizData.length) { loadQuestion(); } 
+            else { showEndScreen(); }
         }
 
         function showEndScreen() {
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('end-screen').style.display = 'block';
-            document.getElementById('final-score').innerText = `${quizData.length}문제 중 ${score}개 맞춤!`;
-            
-            soundFinish.play(); // 게임 종료 효과음 재생
-            jsConfetti.addConfetti({ // 종료 화면 폭죽은 좀 더 화려하게
-                confettiNumber: 300,
-                confettiRadius: 8,
-                confettiColors: ['#ff0a54', '#ff477e', '#ff7096', '#ff85a1', '#fbb1bd', '#f9bec7']
+            document.getElementById('final-score').innerText = `${score} / ${quizData.length} 맞춤!`;
+            // 마지막 축하 폭죽 (더 풍성하게)
+            jsConfetti.addConfetti({
+               emojis: ['🎉', '✨', '🏥', '👏'],
+               confettiNumber: 100,
             });
         }
     </script>

@@ -123,10 +123,13 @@
         let currentQ = 0;
         let score = 0;
 
-        // 폭죽 효과 초기화 (안전하게 함수 안에서 생성하도록 변경)
-        const jsConfetti = new JSConfetti();
+        // 1. 여기서 변수만 먼저 선언합니다.
+        let jsConfetti;
 
         function startGame() {
+            // 2. 게임 시작 버튼을 누를 때(화면이 다 뜬 후) 폭죽 도구를 만듭니다.
+            jsConfetti = new JSConfetti(); 
+            
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
             loadQuestion();

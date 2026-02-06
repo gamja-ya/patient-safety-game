@@ -6,50 +6,12 @@
     <title>환자 안전 사고 맞추기 게임</title>
     <script src="https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.min.js"></script>
     <style>
-        body {
-            font-family: 'Malgun Gothic', sans-serif;
-            background-color: #f0f8ff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            text-align: center;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            width: 90%;
-            max-width: 500px;
-        }
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f8ff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; text-align: center; }
+        .container { background-color: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 90%; max-width: 500px; }
         h1 { color: #0056b3; font-size: 1.5rem; margin-bottom: 20px; }
-        .question-box {
-            font-size: 1.3rem;
-            font-weight: bold;
-            background-color: #e9ecef;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            line-height: 1.6;
-            word-break: keep-all;
-        }
-        .btn-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        button {
-            padding: 20px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            color: white;
-            transition: transform 0.1s;
-        }
+        .question-box { font-size: 1.3rem; font-weight: bold; background-color: #e9ecef; padding: 20px; border-radius: 10px; margin-bottom: 20px; line-height: 1.6; word-break: keep-all; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        button { padding: 20px; font-size: 1.2rem; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; color: white; transition: transform 0.1s; }
         button:active { transform: scale(0.95); }
         .btn-fall { background-color: #ff6b6b; }
         .btn-med { background-color: #4dabf7; }
@@ -97,38 +59,26 @@
     </div>
 
     <script>
+        // JSConfetti 인스턴스를 바로 생성하지 않고 선언만 해둡니다.
+        let jsConfetti = null;
+
         const quizData = [
-            {
-                text: "환자가 화장실을 가려고 침대에서 내려오다가, 바닥에 떨어진 물기에 미끄러져 엉덩방아를 찧었습니다.",
-                answer: "낙상",
-                explain: "💡 바닥의 물기를 즉시 제거하고, 미끄럼 방지 신발을 신어야 합니다."
-            },
-            {
-                text: "간호사가 '김감자' 님에게 줄 약을 들고 갔는데, 확인을 안 하고 옆 침대의 '이고구마' 님에게 약을 주었습니다.",
-                answer: "환자확인",
-                explain: "💡 투약 전에는 반드시 개방형 질문으로 이름을 확인하고 팔찌를 대조해야 합니다."
-            },
-            {
-                text: "의사 처방은 '아침, 저녁' 복용인데, 실수로 '점심'에도 약을 주어 환자가 약을 한 번 더 먹게 되었습니다.",
-                answer: "투약오류",
-                explain: "💡 정확한 환자, 정확한 약물, 정확한 시간, 정확한 용량, 정확한 경로를 확인하는 '5 Right' 원칙이 중요합니다."
-            },
-            {
-                text: "환자에게 주사를 놓으려는 '직전'에, 환자 팔찌의 이름이 다른 것을 발견하고 주사를 놓지 않았습니다.",
-                answer: "근접오류",
-                explain: "💡 사고가 발생하기 전에 발견한 '아차사고'입니다. 이런 사례를 공유해야 큰 사고를 막을 수 있습니다."
-            }
+            { text: "환자가 화장실을 가려고 침대에서 내려오다가, 바닥에 떨어진 물기에 미끄러져 엉덩방아를 찧었습니다.", answer: "낙상", explain: "💡 바닥의 물기를 즉시 제거하고, 미끄럼 방지 신발을 신어야 합니다." },
+            { text: "간호사가 '김감자' 님에게 줄 약을 들고 갔는데, 확인을 안 하고 옆 침대의 '이고구마' 님에게 약을 주었습니다.", answer: "환자확인", explain: "💡 투약 전에는 반드시 개방형 질문으로 이름을 확인하고 팔찌를 대조해야 합니다." },
+            { text: "의사 처방은 '아침, 저녁' 복용인데, 실수로 '점심'에도 약을 주어 환자가 약을 한 번 더 먹게 되었습니다.", answer: "투약오류", explain: "💡 정확한 5 Right 원칙 준수가 중요합니다." },
+            { text: "환자에게 주사를 놓으려는 '직전'에, 환자 팔찌의 이름이 다른 것을 발견하고 주사를 놓지 않았습니다.", answer: "근접오류", explain: "💡 사고가 발생하기 전에 발견한 '아차사고'입니다." }
         ];
 
         let currentQ = 0;
         let score = 0;
 
-        // 1. 여기서 변수만 먼저 선언합니다.
-        let jsConfetti;
-
         function startGame() {
-            // 2. 게임 시작 버튼을 누를 때(화면이 다 뜬 후) 폭죽 도구를 만듭니다.
-            jsConfetti = new JSConfetti(); 
+            // 게임 시작 시점에 라이브러리가 로드되었는지 확인 후 생성
+            try {
+                if (!jsConfetti) jsConfetti = new JSConfetti();
+            } catch (e) {
+                console.log("폭죽 라이브러리 로드 대기 중...");
+            }
             
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
@@ -151,8 +101,8 @@
                 document.getElementById('result-msg').innerText = "⭕ 정답입니다!";
                 document.getElementById('result-msg').style.color = "blue";
                 score++;
-                // 폭죽 터뜨리기!
-                jsConfetti.addConfetti();
+                // 폭죽 실행 (안전하게 체크)
+                if(jsConfetti) jsConfetti.addConfetti();
             } else {
                 document.getElementById('result-msg').innerText = `❌ 오답! 정답은 '${correctAnswer}'`;
                 document.getElementById('result-msg').style.color = "red";
@@ -170,11 +120,12 @@
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('end-screen').style.display = 'block';
             document.getElementById('final-score').innerText = `${score} / ${quizData.length} 맞춤!`;
-            // 마지막 축하 폭죽 (더 풍성하게)
-            jsConfetti.addConfetti({
-               emojis: ['🎉', '✨', '🏥', '👏'],
-               confettiNumber: 100,
-            });
+            if(jsConfetti) {
+                jsConfetti.addConfetti({
+                    emojis: ['🎉', '✨', '🏥', '👏'],
+                    confettiNumber: 100,
+                });
+            }
         }
     </script>
 </body>
